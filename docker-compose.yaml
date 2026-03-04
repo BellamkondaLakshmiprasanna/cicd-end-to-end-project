@@ -1,14 +1,19 @@
-version: "3"
+version: '3.8'
 
 services:
-  app:
+  mongo:
+    image: mongo:6
+    container_name: mongo
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+
+  node-app:
+    image: prasannab2002/node-app:latest
+    container_name: node-app
     build: .
+    restart: unless-stopped
     ports:
       - "3000:3000"
     depends_on:
       - mongo
-
-  mongo:
-    image: mongo
-    ports:
-      - "27017:27017"
