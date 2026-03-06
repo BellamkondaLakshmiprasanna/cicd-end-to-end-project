@@ -1,19 +1,24 @@
 version: '3.8'
 
 services:
+
   mongo:
     image: mongo:6
     container_name: mongo
     restart: unless-stopped
     ports:
       - "27017:27017"
+    volumes:
+      - mongo-data:/data/db
 
   node-app:
-    image: prasannab2002/node-app:latest
-    container_name: node-app
     build: .
+    container_name: node-app
     restart: unless-stopped
     ports:
       - "3000:3000"
     depends_on:
       - mongo
+
+volumes:
+  mongo-data:
