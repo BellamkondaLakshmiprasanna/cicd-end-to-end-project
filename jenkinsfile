@@ -1,0 +1,60 @@
+pipeline {
+    agent any
+
+    environment {
+        DOCKER_IMAGE = "prasannab2002/node-app"
+        EC2_IP = "13.201.91.255"
+    }
+
+    stages {
+
+        stage('Clone Repository') {
+            steps {
+                git branch: 'main', url: 'https://github.com/BellamkondaLakshmiprasanna/cicd-end-to-end-project.git'
+            }
+        }
+
+        stage('Build Docker Image') {
+            steps {
+                script {
+                    docker.build("${DOCKER_IMAGE}:latest")
+                }
+            }
+        }
+
+        stage('Push to DockerHub') {
+            steps {
+                script {
+                    docker.withRegistry('', 'dockerhub-credentials-id') {
+                        docker.image("${DOCKER_IMAGE}:latest").push()
+                    }
+                }
+            }
+        }
+        stage('Deploy to EC2') {
+            steps {
+                sshagent(['ec2-ssh-credentials-id']) {
+                sh '''
+                ssh -o StrictHostKeyChecking=no ec2-user@13.201.91.255 '
+                if [ ! -d "cicd-end-to-end-project" ]; then
+                git clone https://github.com/BellamkondaLakshmiprasanna/cicd-end-to-end-project.git
+                fi
+                cd cicd-end-to-end-project
+                git pull
+                docker rm -f node-app || true
+                docker rm -f mongo || true
+
+
+                docker pull prasannab2002/node-app:latest
+                docker-compose up -d
+                '
+                '''
+                    
+                }
+                
+            }
+            
+        }
+
+    }
+}
